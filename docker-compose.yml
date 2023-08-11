@@ -1,0 +1,46 @@
+version: '3.7'
+services:
+  opensearch:
+    image: public.ecr.aws/opensearchproject/opensearch:1.3.11
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "-k", "-u", "admin:admin", "https://localhost:9200/_cluster/health"]
+      interval: 1s
+      timeout: 1s
+      retries: 30
+      start_period: 5s
+    volumes:
+      - data-volume:/usr/share/opensearch/data
+
+  kibana:
+    image: public.ecr.aws/opensearchproject/opensearch-dashboards:1.3.11
+    environment:
+      OPENSEARCH_HOSTS: '["https://opensearch:9200"]'
+    ports:
+      - "5601:5601"
+    depends_on:
+      opensearch:
+        condition: service_healthy
+
+  script:
+    build: .
+    platform: linux/amd64
+    volumes:
+      - ./scripts:/scripts
+      - ./app:/app
+      - ./data:/data
+    ports:
+      - "3000:3000"
+    depends_on:
+      opensearch:
+        condition: service_healthy
+
+volumes:
+  data-volume:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: size=10g

@@ -1,0 +1,21 @@
+{
+  "name": "language-configuration-poc",
+  "version": "0.0.1",
+  "description": "opensearch analyzer configuration tool",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "(cd app && npm install); (cd scripts && npm install)",
+    "start": "(bash ./run.sh)",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WPMedia/language-configuration-poc.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/WPMedia/language-configuration-poc/issues"
+  },
+  "homepage": "https://github.com/WPMedia/language-configuration-poc#readme"
+}
