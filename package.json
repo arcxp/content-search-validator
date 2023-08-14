@@ -4,8 +4,8 @@
   "description": "opensearch analyzer configuration tool",
   "main": "index.js",
   "scripts": {
+    "start": "nodemon -L -w ./data -e json -x ./run.sh",
     "postinstall": "(cd app && npm install); (cd scripts && npm install)",
-    "start": "(bash ./run.sh)",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/WPMedia/language-configuration-poc/issues"
   },
-  "homepage": "https://github.com/WPMedia/language-configuration-poc#readme"
+  "homepage": "https://github.com/WPMedia/language-configuration-poc#readme",
+  "dependencies": {
+    "nodemon": "^3.0.1"
+  }
 }

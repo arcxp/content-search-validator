@@ -8,10 +8,24 @@ This is an opensearch docker container with an express app that allows you to lo
 
 - Runs an opensearch docker container on port 9200
 - Runs an opensearch admin (kibana) docker container on port 5601
+- Load all analyzer configurations in data/analyzer and creates an index using the file name
+- Load all content in data/content/{index}
 - Runs an express container on port 3000
-- Creates two indexes
-  - index_fr using the french analyzer
-  - index_es using the espanish analyzer
+
+## Sample data
+
+```
+data/
+├── analyzer/
+│   ├── arabic.json
+│   └── french_v2.json
+├── content
+│   ├── arabic
+│   │   └── arabic_content.json
+│   └── french_v2
+│   │   └── french_content.json
+└── test
+```
 
 ## How to run it?
 

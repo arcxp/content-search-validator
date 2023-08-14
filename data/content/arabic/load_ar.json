@@ -1,0 +1,20 @@
+[
+  {
+    "_id": "BJ7BKFXOHRGFBI3UHSA7GREQHA",
+    "headlines": {
+      "basic": "هذا هو العنوان الأول"
+    }
+  },
+  {
+    "_id": "RYVP3U5CVNHGVNSBWXJFZCLR6U",
+    "headlines": {
+      "basic": "هذا هو العنوان الثاني"
+    }
+  },
+  {
+    "_id": "ADT6DMHBMRENDPTOEHNCPNYSLU",
+    "headlines": {
+      "basic": "هذا هو العنوان الثالث"
+    }
+  }
+]

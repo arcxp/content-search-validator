@@ -1,5 +1,6 @@
 const fs = require("fs");
 const got = require("got");
+const path = require("path");
 const esx = require("/app/search-esX.js");
 const mapping = require("/app/elasticsearch_mappings/elasticsearch_mapping.js");
 
@@ -20,9 +21,12 @@ function change_language(config, lang) {
   });
 }
 
-function dowloadFile(fileName) {
+function dowloadFile(pathName, fileName) {
   try {
-    const outFile = fs.readFileSync(`/data/${fileName}`, { encoding: "utf-8" });
+    const filePath = path.join(pathName, fileName);
+    const outFile = fs.readFileSync(filePath, {
+      encoding: "utf-8",
+    });
     return JSON.parse(outFile);
   } catch (error) {
     console.error(error);
@@ -56,6 +60,7 @@ async function importDoc(index, doc) {
       `https://opensearch:9200/${index}/_doc/${_id}`,
       options
     );
+    console.log(`📔 IMPORTING DOCUMENT ${_id}`);
     return results;
   } catch (error) {
     console.error(error);
@@ -94,18 +99,21 @@ async function loadAnalyzer(index, analyzer) {
     const config_src = mapping.v2["7.1"]["japanese"];
     mapping.remove_all_field_es7(config_src);
 
-    const config_fr = JSON.parse(JSON.stringify(config_src));
-    const config_es = JSON.parse(JSON.stringify(config_src));
-    change_language(config_fr, "french");
-    change_language(config_es, "spanish");
+    const config = JSON.parse(JSON.stringify(config_src));
+    const tokenizer = Object.entries(analyzer.settings.analysis.analyzer).map(
+      (i) => {
+        const [key, obj] = i;
+        return obj.tokenizer;
+      }
+    );
+    change_language(config, tokenizer[0]);
+    analyzer.mappings = config.mappings;
+    analyzer.settings["index.mapping.ignore_malformed"] = false;
+    analyzer.settings["index.mapping.total_fields.limit"] = 2000;
 
     try {
-      console.log(`🗑️ DELETING OLD INDICES`);
-      await got(`https://opensearch:9200/index_fr`, {
-        ...default_options,
-        method: `DELETE`,
-      });
-      await got(`https://opensearch:9200/index_es`, {
+      console.log(`🗑️ DELETING OLD ${index}`);
+      await got(`https://opensearch:9200/${index}`, {
         ...default_options,
         method: `DELETE`,
       });
@@ -114,9 +122,9 @@ async function loadAnalyzer(index, analyzer) {
       // console.log(err);
     }
 
-    console.log(`📦 CREATING NEW INDEXES`);
-    await createIndex("index_fr", config_fr);
-    await createIndex("index_es", config_es);
+    console.log(`📦 CREATING NEW ${index}`);
+    console.log(`${index} - ${JSON.stringify(analyzer)}`);
+    await createIndex(index, analyzer);
   } catch (err) {
     console.log(err);
   }

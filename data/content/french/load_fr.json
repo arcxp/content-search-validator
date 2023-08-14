@@ -1,20 +1,20 @@
 [
-{
+  {
     "_id": "MOOVM45YAFG3K2WZQSJRNEGYM",
     "headlines": {
-        "basic": "This is headline une"
+      "basic": "This is headline une"
     }
-},
-{
+  },
+  {
     "_id": "XN2ZDFP2JNPHVFAPBHOWBMMWPI",
     "headlines": {
-        "basic": "This is headline duex"
+      "basic": "This is headline duex"
     }
-},
-{
+  },
+  {
     "_id": "Y3F7SYIAYQG2O24WSHTUGSNE64",
     "headlines": {
-        "basic": "This is headline trois"
+      "basic": "This is headline trois"
     }
-}
+  }
 ]

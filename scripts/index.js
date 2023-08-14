@@ -1,4 +1,6 @@
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 const {
   dowloadFile,
   importDoc,
@@ -19,12 +21,12 @@ app.use("/display", express.static("/data"));
 
 app.post("/load/:indexName/:fileName", (req, res) => {
   const indexName = req.params.indexName;
-  let file = dowloadFile(req.params.fileName);
-  if (file) {
-    if (!Array.isArray(file)) file = [file];
-    file.forEach((item) => importDoc(indexName, item));
+  let newContent = dowloadFile("/data/content", req.params.fileName);
+  if (newContent) {
+    if (!Array.isArray(newContent)) newContent = [newContent];
+    newContent.forEach((item) => importDoc(indexName, item));
   }
-  res.send(`Loaded ${JSON.stringify(file)}`);
+  res.send(`Loaded ${JSON.stringify(newContent)}`);
 });
 
 app.post(
@@ -42,8 +44,30 @@ app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
 
-// Create index_fr and index_es so there is something to work with
-// TODO - Ability to load a new configuration
+// Runs on startup
 (async () => {
-  await loadAnalyzer("index_name_goes_here", "analyzer_object_here");
+  // load all analyzer configurations files in data/analyzer
+  fs.readdir("/data/analyzer", async function (err, files) {
+    files.forEach(async function (file) {
+      const indexName = path.parse(file).name;
+      const config = dowloadFile("/data/analyzer", file);
+      await loadAnalyzer(indexName, config);
+    });
+  });
+  // load all content files in data/content/index/content_to_load.json
+  // top level must match the analyzer configuration name
+  fs.readdir("/data/content", async function (err, indexes) {
+    indexes.forEach(async function (index) {
+      const contentPath = path.join("/data/content", index);
+      fs.readdir(contentPath, async function (err, files) {
+        files.forEach(async function (file) {
+          let newContent = dowloadFile(contentPath, file);
+          if (newContent) {
+            if (!Array.isArray(newContent)) newContent = [newContent];
+            newContent.forEach((item) => importDoc(index, item));
+          }
+        });
+      });
+    });
+  });
 })();
