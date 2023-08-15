@@ -42,12 +42,6 @@ services:
       - ./data:/data
     ports:
       - "3000:3000"
-    x-develop:
-      command: bash /scripts/run.sh
-      watch:
-        - action: sync
-          path: ./data
-          target: /data
     depends_on:
       opensearch:
         condition: service_healthy
