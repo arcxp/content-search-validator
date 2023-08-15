@@ -8,8 +8,9 @@ This is an opensearch docker container with an express app that allows you to lo
 
 - Runs an opensearch docker container on port 9200
 - Runs an opensearch admin (kibana) docker container on port 5601
-- Load all analyzer configurations in data/analyzer and creates an index using the file name
+- Load all analyzer configurations in data/analyzer and creates an index using the file name for each analyzer
 - Load all content in data/content/{index}
+- run all test files TODO
 - Runs an express container on port 3000
 
 ## Sample data
@@ -32,9 +33,10 @@ data/
 It is recommneded to install nvm and use it to manage your node environments.
 
 ```
-$ npm run postinstall - to install dependencies
-$ npm run start - This will start the containers
+$ ./run.sh
 ```
+
+Making changes to or adding files in data will trigger the container to recreate the analyzers and reload the contents.
 
 open postman or your favorite API tool and access express on port 3000.
 

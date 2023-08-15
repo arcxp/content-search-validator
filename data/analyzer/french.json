@@ -1,11 +1,9 @@
 {
   "settings": {
     "analysis": {
-      "filter": {},
       "analyzer": {
         "french": {
-          "tokenizer":  "french",
-          "filter": []
+          "tokenizer": "french"
         }
       }
     }

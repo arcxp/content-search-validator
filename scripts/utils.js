@@ -1,8 +1,8 @@
 const fs = require("fs");
 const got = require("got");
 const path = require("path");
-const esx = require("/app/search-esX.js");
-const mapping = require("/app/elasticsearch_mappings/elasticsearch_mapping.js");
+const esx = require("./app/search-esX.js");
+const mapping = require("./app/elasticsearch_mappings/elasticsearch_mapping.js");
 
 const default_options = {
   headers: { "Content-Type": "application/json" },
@@ -12,7 +12,7 @@ const default_options = {
   password: "admin",
 };
 
-function change_language(config, lang) {
+function change_tokenizer(config, lang) {
   esx.modifyObjectRecursively(config, (obj, key) => {
     if (obj[key] === "kuromoji") {
       obj[key] = lang;
@@ -60,7 +60,7 @@ async function importDoc(index, doc) {
       `https://opensearch:9200/${index}/_doc/${_id}`,
       options
     );
-    console.log(`📔 IMPORTING DOCUMENT ${_id}`);
+    console.log(`📔 IMPORTING DOCUMENT ${_id} to ${index}`);
     return results;
   } catch (error) {
     console.error(error);
@@ -74,7 +74,6 @@ async function searchIndex(index, query) {
       method: "POST",
       body: JSON.stringify(query),
     };
-    console.log(`options - ${JSON.stringify(options)}`);
     const results = await got(
       `https://opensearch:9200/${index}/_search`,
       options
@@ -94,7 +93,6 @@ async function refresh() {
 }
 
 async function loadAnalyzer(index, analyzer) {
-  // TODO - update to create a new configuration
   try {
     const config_src = mapping.v2["7.1"]["japanese"];
     mapping.remove_all_field_es7(config_src);
@@ -106,28 +104,62 @@ async function loadAnalyzer(index, analyzer) {
         return obj.tokenizer;
       }
     );
-    change_language(config, tokenizer[0]);
+    change_tokenizer(config, tokenizer[0]);
     analyzer.mappings = config.mappings;
     analyzer.settings["index.mapping.ignore_malformed"] = false;
     analyzer.settings["index.mapping.total_fields.limit"] = 2000;
 
     try {
-      console.log(`🗑️ DELETING OLD ${index}`);
+      console.log(`🗑️ DELETING OLD ${index} index`);
       await got(`https://opensearch:9200/${index}`, {
         ...default_options,
         method: `DELETE`,
       });
       await refresh();
     } catch (err) {
-      // console.log(err);
+      console.log(err);
     }
 
-    console.log(`📦 CREATING NEW ${index}`);
-    console.log(`${index} - ${JSON.stringify(analyzer)}`);
+    console.log(`📦 CREATING NEW ${index} index`);
     await createIndex(index, analyzer);
   } catch (err) {
     console.log(err);
   }
 }
 
-module.exports = { dowloadFile, importDoc, searchIndex, loadAnalyzer };
+async function createAnalyzers() {
+  // load all analyzer configurations files in data/analyzer
+  fs.readdir("/data/analyzer", async function (err, files) {
+    files.forEach(async function (file) {
+      const indexName = path.parse(file).name;
+      const config = dowloadFile("/data/analyzer", file);
+      await loadAnalyzer(indexName, config);
+    });
+  });
+}
+
+async function createData() {
+  // load all content files in data/content/index
+  // index must match the analyzer configuration name
+  fs.readdir("/data/content", async function (err, indexes) {
+    indexes.forEach(async function (index) {
+      const contentPath = path.join("/data/content", index);
+      fs.readdir(contentPath, async function (err, files) {
+        files.forEach(async function (file) {
+          let newContent = dowloadFile(contentPath, file);
+          if (newContent) {
+            if (!Array.isArray(newContent)) newContent = [newContent];
+            newContent.forEach((item) => importDoc(index, item));
+          }
+        });
+      });
+    });
+  });
+}
+
+async function createAnalyzerAndData() {
+  await createAnalyzers();
+  await createData();
+}
+
+module.exports = { dowloadFile, importDoc, searchIndex, createAnalyzerAndData };
