@@ -19,12 +19,17 @@ app.use("/display", express.static("/data"));
 
 app.post("/load/:indexName/:fileName", (req, res) => {
   const indexName = req.params.indexName;
-  let newContent = dowloadFile("/data/content", req.params.fileName);
+  let newContent = dowloadFile(
+    `/data/content/${indexName}`,
+    req.params.fileName
+  );
   if (newContent) {
     if (!Array.isArray(newContent)) newContent = [newContent];
     newContent.forEach((item) => importDoc(indexName, item));
+    res.send(`Loaded ${JSON.stringify(newContent)}`);
+  } else {
+    res.status(404).send("File not found");
   }
-  res.send(`Loaded ${JSON.stringify(newContent)}`);
 });
 
 app.post(
@@ -33,8 +38,11 @@ app.post(
     const indexName = req.params.indexName;
     const query = req.body;
     const results = await searchIndex(indexName, query);
-    if (results && results.hits && results.hits.hits)
+    if (results && results.hits && results.hits.hits) {
       res.send(results.hits.hits);
+    } else {
+      res.status(400).send(results);
+    }
   })
 );
 

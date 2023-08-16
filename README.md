@@ -23,7 +23,7 @@ data/
 ├── content
 │   ├── arabic
 │   │   └── arabic_content.json
-│   └── french_v2
+│   └── french
 │   │   └── french_content.json
 └── test
     TODO
@@ -31,7 +31,7 @@ data/
 
 ## How to run it?
 
-It is recommneded to install nvm and use it to manage your node environments.
+It is recommneded to install nvm and use it to manage your node environments. This uses node 18 in docker.
 
 ```
 $ ./run.sh
@@ -46,19 +46,19 @@ You can add data to opensearch by creating a json file in the data directory. Th
 To view a json file in the data folder use a GET request:
 
 ```
-http://localhost:3000/display/load_fr.json
+http://localhost:3000/display/content/french/french_content.json
 ```
 
 To load a json file in the data folder use a POST request /load/{index_name}/{file_name}:
 
 ```
-http://localhost:3000/load/index_fr/load_fr.json
+http://localhost:3000/load/french/french_content.json
 ```
 
 To search for content use a POST request /search/{index_name} and pass a opensearch query in the body as json
 
 ```
-http://localhost:3000/search/index_fr
+http://localhost:3000/search/french
 
 body:
 {
@@ -80,7 +80,7 @@ TODO - implement analyzer endpoints
 You can directly access the opensearch container on port 9200. This requires basic auth admin:admin
 
 ```
-https://localhost:9200/index_fr/_search
+https://localhost:9200/french/_search
 body:
 {
   "query": {
@@ -93,7 +93,7 @@ body:
 
 ## admin container
 
-You can directly access the opensearch admin interface on port 5601
+You can directly access the opensearch admin interface on port 5601 login with admin admin
 
 ```
 http://localhost:5601/

@@ -12,13 +12,21 @@ const default_options = {
   password: "admin",
 };
 
-function change_tokenizer(config, lang) {
+function add_mapping_to_analyzer(index, analyzer) {
+  const config_src = mapping.v2["7.1"]["japanese"];
+  mapping.remove_all_field_es7(config_src);
+
+  const config = JSON.parse(JSON.stringify(config_src));
   esx.modifyObjectRecursively(config, (obj, key) => {
     if (obj[key] === "kuromoji") {
-      obj[key] = lang;
+      obj[key] = index;
     }
     return obj[key];
   });
+  analyzer.mappings = config.mappings;
+  analyzer.settings["index.mapping.ignore_malformed"] = false;
+  analyzer.settings["index.mapping.total_fields.limit"] = 2000;
+  return analyzer;
 }
 
 function dowloadFile(pathName, fileName) {
@@ -30,7 +38,6 @@ function dowloadFile(pathName, fileName) {
     return JSON.parse(outFile);
   } catch (error) {
     console.error(error);
-    return {};
   }
 }
 
@@ -41,7 +48,9 @@ async function createIndex(name, mapping) {
       method: "PUT",
       body: JSON.stringify(mapping),
     };
-    await got(`https://opensearch:9200/${name}`, options);
+    await got(`https://opensearch:9200/${name}`, options).catch((error) => {
+      console.log(JSON.stringify(error.response.body));
+    });
   } catch (error) {
     console.error(error);
   }
@@ -81,7 +90,8 @@ async function searchIndex(index, query) {
     console.log(`results - ${JSON.stringify(results)}`);
     return results;
   } catch (error) {
-    console.error(error);
+    console.error(`error - ${JSON.stringify(error)}`);
+    return error;
   }
 }
 
@@ -89,42 +99,28 @@ async function refresh() {
   await got(`https://opensearch:9200/_refresh`, {
     ...default_options,
     method: `POST`,
+  }).catch((err) => {
+    console.log(err.response.body);
+  });
+}
+
+async function delete_index(index) {
+  console.log(`🗑️ DELETING OLD ${index} index`);
+  await got(`https://opensearch:9200/${index}`, {
+    ...default_options,
+    method: `DELETE`,
+  }).catch((err) => {
+    console.log(err.response.body);
   });
 }
 
 async function loadAnalyzer(index, analyzer) {
-  try {
-    const config_src = mapping.v2["7.1"]["japanese"];
-    mapping.remove_all_field_es7(config_src);
+  const arcAnalyzer = add_mapping_to_analyzer(index, analyzer);
+  await delete_index(index);
+  await refresh();
 
-    const config = JSON.parse(JSON.stringify(config_src));
-    const tokenizer = Object.entries(analyzer.settings.analysis.analyzer).map(
-      (i) => {
-        const [key, obj] = i;
-        return obj.tokenizer;
-      }
-    );
-    change_tokenizer(config, tokenizer[0]);
-    analyzer.mappings = config.mappings;
-    analyzer.settings["index.mapping.ignore_malformed"] = false;
-    analyzer.settings["index.mapping.total_fields.limit"] = 2000;
-
-    try {
-      console.log(`🗑️ DELETING OLD ${index} index`);
-      await got(`https://opensearch:9200/${index}`, {
-        ...default_options,
-        method: `DELETE`,
-      });
-      await refresh();
-    } catch (err) {
-      console.log(err);
-    }
-
-    console.log(`📦 CREATING NEW ${index} index`);
-    await createIndex(index, analyzer);
-  } catch (err) {
-    console.log(err);
-  }
+  console.log(`📦 CREATING NEW ${index} index`);
+  await createIndex(index, arcAnalyzer);
 }
 
 async function createAnalyzers() {
