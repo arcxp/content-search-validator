@@ -29,10 +29,10 @@ function add_mapping_to_analyzer(index, analyzer) {
   return analyzer;
 }
 
-function dowloadFile(pathName, fileName) {
+async function downloadFile(pathName, fileName) {
   try {
     const filePath = path.join(pathName, fileName);
-    const outFile = fs.readFileSync(filePath, {
+    const outFile = await fs.promises.readFile(filePath, {
       encoding: "utf-8",
     });
     return JSON.parse(outFile);
@@ -125,32 +125,37 @@ async function loadAnalyzer(index, analyzer) {
 
 async function createAnalyzers() {
   // load all analyzer configurations files in data/analyzer
-  fs.readdir("/data/analyzer", async function (err, files) {
-    files.forEach(async function (file) {
+  const files = await fs.promises.readdir("/data/analyzer");
+  await Promise.all(
+    files.map(async function (file) {
       const indexName = path.parse(file).name;
-      const config = dowloadFile("/data/analyzer", file);
+      const config = await downloadFile("/data/analyzer", file);
       await loadAnalyzer(indexName, config);
-    });
-  });
+    })
+  );
 }
 
 async function createData() {
   // load all content files in data/content/index
   // index must match the analyzer configuration name
-  fs.readdir("/data/content", async function (err, indexes) {
-    indexes.forEach(async function (index) {
+  const indexes = await fs.promises.readdir("/data/content");
+  await Promise.all(
+    indexes.map(async function (index) {
       const contentPath = path.join("/data/content", index);
-      fs.readdir(contentPath, async function (err, files) {
-        files.forEach(async function (file) {
-          let newContent = dowloadFile(contentPath, file);
+      const files = await fs.promises.readdir(contentPath);
+      await Promise.all(
+        files.map(async function (file) {
+          let newContent = await downloadFile(contentPath, file);
           if (newContent) {
             if (!Array.isArray(newContent)) newContent = [newContent];
-            newContent.forEach((item) => importDoc(index, item));
+            await Promise.all(
+              newContent.map(async (item) => importDoc(index, item))
+            );
           }
-        });
-      });
-    });
-  });
+        })
+      );
+    })
+  );
 }
 
 async function createAnalyzerAndData() {
@@ -158,4 +163,9 @@ async function createAnalyzerAndData() {
   await createData();
 }
 
-module.exports = { dowloadFile, importDoc, searchIndex, createAnalyzerAndData };
+module.exports = {
+  downloadFile,
+  importDoc,
+  searchIndex,
+  createAnalyzerAndData,
+};

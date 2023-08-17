@@ -1,6 +1,6 @@
 const express = require("express");
 const {
-  dowloadFile,
+  downloadFile,
   importDoc,
   searchIndex,
   createAnalyzerAndData,
@@ -17,20 +17,25 @@ const asyncHandler = (fun) => (req, res, next) => {
 
 app.use("/display", express.static("/data"));
 
-app.post("/load/:indexName/:fileName", (req, res) => {
-  const indexName = req.params.indexName;
-  let newContent = dowloadFile(
-    `/data/content/${indexName}`,
-    req.params.fileName
-  );
-  if (newContent) {
-    if (!Array.isArray(newContent)) newContent = [newContent];
-    newContent.forEach((item) => importDoc(indexName, item));
-    res.send(`Loaded ${JSON.stringify(newContent)}`);
-  } else {
-    res.status(404).send("File not found");
-  }
-});
+app.post(
+  "/load/:indexName/:fileName",
+  asyncHandler(async (req, res) => {
+    const indexName = req.params.indexName;
+    let newContent = await downloadFile(
+      `/data/content/${indexName}`,
+      req.params.fileName
+    );
+    if (newContent) {
+      if (!Array.isArray(newContent)) newContent = [newContent];
+      await Promise.all(
+        newContent.forEach((item) => importDoc(indexName, item))
+      );
+      res.send(`Loaded ${JSON.stringify(newContent)}`);
+    } else {
+      res.status(404).send("File not found");
+    }
+  })
+);
 
 app.post(
   "/search/:indexName",
@@ -49,7 +54,7 @@ app.post(
 app.post(
   "/reindex",
   asyncHandler(async (req, res) => {
-    createAnalyzerAndData();
+    await createAnalyzerAndData();
     res.send("Reindexed");
   })
 );
@@ -60,5 +65,5 @@ app.listen(port, () => {
 
 // Runs on startup
 (async () => {
-  createAnalyzerAndData();
+  await createAnalyzerAndData();
 })();
