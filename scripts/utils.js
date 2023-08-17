@@ -12,20 +12,34 @@ const default_options = {
   password: "admin",
 };
 
-function add_mapping_to_analyzer(index, analyzer) {
+function add_mapping_to_analyzer(analyzer) {
   const config_src = mapping.v2["7.1"]["japanese"];
   mapping.remove_all_field_es7(config_src);
 
   const config = JSON.parse(JSON.stringify(config_src));
+
+  // attempt to get the analyzer name from the object
+  let analyzerName;
+  try {
+    analyzerName = Object.keys(analyzer.settings.analysis.analyzer);
+    analyzerName = analyzerName[0];
+  } catch (error) {
+    analyzerName = "standard";
+  }
   esx.modifyObjectRecursively(config, (obj, key) => {
     if (obj[key] === "kuromoji") {
-      obj[key] = index;
+      obj[key] = analyzerName;
     }
     return obj[key];
   });
   analyzer.mappings = config.mappings;
-  analyzer.settings["index.mapping.ignore_malformed"] = false;
-  analyzer.settings["index.mapping.total_fields.limit"] = 2000;
+  analyzer.settings = {
+    ...analyzer.settings,
+    ...{
+      "index.mapping.ignore_malformed": false,
+      "index.mapping.total_fields.limit": 2000,
+    },
+  };
   return analyzer;
 }
 
@@ -99,8 +113,8 @@ async function refresh() {
   await got(`https://opensearch:9200/_refresh`, {
     ...default_options,
     method: `POST`,
-  }).catch((err) => {
-    console.log(err.response.body);
+  }).catch((error) => {
+    console.log(error.response.body);
   });
 }
 
@@ -109,13 +123,13 @@ async function delete_index(index) {
   await got(`https://opensearch:9200/${index}`, {
     ...default_options,
     method: `DELETE`,
-  }).catch((err) => {
-    console.log(err.response.body);
+  }).catch((error) => {
+    console.log(error.response.body);
   });
 }
 
 async function loadAnalyzer(index, analyzer) {
-  const arcAnalyzer = add_mapping_to_analyzer(index, analyzer);
+  const arcAnalyzer = add_mapping_to_analyzer(analyzer);
   await delete_index(index);
   await refresh();
 

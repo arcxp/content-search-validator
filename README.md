@@ -19,7 +19,7 @@ This is an opensearch docker container with an express app that allows you to lo
 data/
 ├── analyzer/
 │   ├── arabic.json
-│   └── french_v2.json
+│   └── french.json
 ├── content
 │   ├── arabic
 │   │   └── arabic_content.json
@@ -28,6 +28,26 @@ data/
 └── test
     TODO
 ```
+
+## Analyzer format
+
+The analyzer file name `french.json` will be used to create the index `french`.
+
+The structure of the analyzer file (analyzers)[https://www.elastic.co/guide/en/elasticsearch/reference/7.10/analyzer-anatomy.html]
+
+```
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "french": {}
+      }
+    }
+  }
+}
+```
+
+The name of the analyzer is the key of settings.analysis.analyzer. In the above example it will use the native french analyzer.
 
 ## How to run it?
 
@@ -40,8 +60,6 @@ $ ./run.sh
 Making changes to or adding files in data will trigger the container to recreate the analyzers and reload the contents.
 
 open postman or your favorite API tool and access express on port 3000.
-
-You can add data to opensearch by creating a json file in the data directory. There is already a data/load_fr.json
 
 To view a json file in the data folder use a GET request:
 
