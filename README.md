@@ -1,8 +1,8 @@
 # language-configuration-poc
 
-A tool to build and test multiple language configurations using opensearch.
+A tool to build and test language configurations using opensearch.
 
-This is an opensearch docker container with an express app that allows you to load analyzers, data and search for that data
+This is an opensearch docker container with an express app that allows you to load analyzers, data and search for that data.
 
 ## What does it do?
 
@@ -10,7 +10,6 @@ This is an opensearch docker container with an express app that allows you to lo
 - Runs an opensearch admin (kibana) docker container on port 5601
 - Load all analyzer configurations in data/analyzer and creates an index using the file name for each analyzer
 - Load all content in data/content/{index}
-- run all test files TODO
 - Runs an express container on port 3000
 
 ## Sample data
@@ -18,20 +17,29 @@ This is an opensearch docker container with an express app that allows you to lo
 ```
 data/
 ├── analyzer/
-│   ├── arabic.json
-│   └── french.json
+│   ├── arabic.json (an example of a custom analyzer "rebuilt_arabic")
+│   ├── english.json (native english analyzer)
+│   ├── french.json (native french analyzer)
+│   └── standard.json (default ArcXP analyzer)
 ├── content
 │   ├── arabic
 │   │   └── arabic_content.json
+│   ├── english
+│   │   └── english_content.json
 │   └── french
 │   │   └── french_content.json
+│   └── standard
+│   │   └── standard_content.json
 └── test
-    TODO
+│   ├── arabic.test.js
+│   ├── english.test.js
+│   ├── french.test.js
+│   └── standard.test.js
 ```
 
 ## Analyzer format
 
-The analyzer file name `french.json` will be used to create the index `french`.
+The analyzer file name `french.json` will be used to create the index `french` and if the file contains no analyzer object will use the file name to set the analyzer (native french).
 
 The structure of the analyzer file (analyzers)[https://www.elastic.co/guide/en/elasticsearch/reference/7.10/analyzer-anatomy.html]
 
@@ -39,25 +47,49 @@ The structure of the analyzer file (analyzers)[https://www.elastic.co/guide/en/e
 {
   "settings": {
     "analysis": {
+      "filter": {
+        "arabic_stop": {
+          "type":       "stop",
+          "stopwords":  "_arabic_"
+        },
+        "arabic_keywords": {
+          "type":       "keyword_marker",
+          "keywords":   ["مثال"]
+        },
+        "arabic_stemmer": {
+          "type":       "stemmer",
+          "language":   "arabic"
+        }
+      },
       "analyzer": {
-        "french": {}
+        "rebuilt_arabic": {
+          "tokenizer":  "standard",
+          "filter": [
+            "lowercase",
+            "decimal_digit",
+            "arabic_stop",
+            "arabic_normalization",
+            "arabic_keywords",
+            "arabic_stemmer"
+          ]
+        }
       }
     }
   }
 }
 ```
 
-The name of the analyzer is the key of settings.analysis.analyzer. In the above example it will use the native french analyzer.
+The name of the analyzer is the key of settings.analysis.analyzer. In the above example it will create a new analyzer called french that will contain no configurations. This will not use the native french analyzer.
 
 ## How to run it?
 
-It is recommneded to install nvm and use it to manage your node environments. This uses node 18 in docker.
+It is recommneded to install nvm and use it to manage your node environments. This uses node 18 docker image.
 
 ```
 $ ./run.sh
 ```
 
-Making changes to or adding files in data will trigger the container to recreate the analyzers and reload the contents.
+Making changes to or adding files in data will trigger the container to reload the analyzers reindex and reload the contents.
 
 open postman or your favorite API tool and access express on port 3000.
 
@@ -82,16 +114,19 @@ body:
 {
   "query": {
     "query_string": {
-      "query": "headline"
+      "query": "parle"
     }
   }
 }
 ```
 
-TODO - implement analyzer endpoints
+## tests
 
-`/listIndexes`
-`/loadAnalyzer/{indexName}/{analyzerFile.json}`
+run tests locally using 
+
+```
+npm test
+```
 
 ## opensearch container
 
@@ -101,17 +136,15 @@ You can directly access the opensearch container on port 9200. This requires bas
 https://localhost:9200/french/_search
 body:
 {
-  "query": {
-    "query_string": {
-      "query": "headline"
+    "query" :{
+        "match_all": {}
     }
-  }
 }
 ```
 
 ## admin container
 
-You can directly access the opensearch admin interface on port 5601 login with admin admin
+You can directly access the opensearch admin interface on port 5601. login with admin admin
 
 ```
 http://localhost:5601/

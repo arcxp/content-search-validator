@@ -12,19 +12,19 @@ const default_options = {
   password: "admin",
 };
 
-function add_mapping_to_analyzer(analyzer) {
+function add_mapping_to_analyzer(index, analyzer) {
   const config_src = mapping.v2["7.1"]["japanese"];
   mapping.remove_all_field_es7(config_src);
 
   const config = JSON.parse(JSON.stringify(config_src));
 
-  // attempt to get the analyzer name from the object
+  // attempt to get the analyzer name from the object, otherwise use the index (filename)
   let analyzerName;
   try {
     analyzerName = Object.keys(analyzer.settings.analysis.analyzer);
     analyzerName = analyzerName[0];
   } catch (error) {
-    analyzerName = "standard";
+    analyzerName = index;
   }
   esx.modifyObjectRecursively(config, (obj, key) => {
     if (obj[key] === "kuromoji") {
@@ -129,7 +129,7 @@ async function delete_index(index) {
 }
 
 async function loadAnalyzer(index, analyzer) {
-  const arcAnalyzer = add_mapping_to_analyzer(analyzer);
+  const arcAnalyzer = add_mapping_to_analyzer(index, analyzer);
   await delete_index(index);
   await refresh();
 
