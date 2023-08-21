@@ -79,13 +79,16 @@ The structure of the analyzer file (analyzers)[https://www.elastic.co/guide/en/e
 }
 ```
 
-The name of the analyzer is the key of settings.analysis.analyzer. In the above example it will create a new analyzer called french that will contain no configurations. This will not use the native french analyzer.
+The name of the analyzer is the key of settings.analysis.analyzer. In the above example it will create a new analyzer called `rebuilt_arabic`` that will contain no configurations. This will not use the native french analyzer.
 
 ## How to run it?
 
 It is recommneded to install nvm and use it to manage your node environments. This uses node 18 docker image.
 
+### Install dependencies, only needed once.
+
 ```
+$ npm install
 $ ./run.sh
 ```
 
@@ -122,10 +125,10 @@ body:
 
 ## tests
 
-run tests locally using 
+run tests locally using
 
 ```
-npm test
+$ npm test
 ```
 
 ## opensearch container
@@ -133,12 +136,15 @@ npm test
 You can directly access the opensearch container on port 9200. This requires basic auth admin:admin
 
 ```
-https://localhost:9200/french/_search
-body:
-{
-    "query" :{
-        "match_all": {}
+curl \
+  -H "Content-Type: application/json" \
+  -XPOST http://localhost:3000/search/french \
+  -d '{
+  "query": {
+    "query_string": {
+      "query": "parle"
     }
+  }
 }
 ```
 

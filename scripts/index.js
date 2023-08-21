@@ -26,9 +26,12 @@ app.post(
       req.params.fileName
     );
     if (newContent) {
+      console.log(`content - ${JSON.stringify(newContent)}`);
       if (!Array.isArray(newContent)) newContent = [newContent];
       await Promise.all(
-        newContent.forEach((item) => importDoc(indexName, item))
+        newContent.map(async function (item) {
+          importDoc(indexName, item);
+        })
       );
       res.send(`Loaded ${JSON.stringify(newContent)}`);
     } else {
@@ -60,7 +63,7 @@ app.post(
 );
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`App listening on port ${port}`);
 });
 
 // Runs on startup

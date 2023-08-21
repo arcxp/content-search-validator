@@ -1,6 +1,7 @@
 const fs = require("fs");
 const got = require("got");
 const path = require("path");
+
 const esx = require("./app/search-esX.js");
 const mapping = require("./app/elasticsearch_mappings/elasticsearch_mapping.js");
 
@@ -124,7 +125,9 @@ async function delete_index(index) {
     ...default_options,
     method: `DELETE`,
   }).catch((error) => {
-    console.log(error.response.body);
+    if (error.response.body?.status !== 404) {
+      console.log(error.response.body);
+    }
   });
 }
 
