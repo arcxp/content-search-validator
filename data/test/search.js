@@ -19,7 +19,7 @@ async function searchIndex(index, query) {
       `https://localhost:9200/${index}/_search`,
       options
     ).json();
-    console.log(`results - ${JSON.stringify(results)}`);
+    // console.log(`results - ${JSON.stringify(results)}`);
     return results;
   } catch (error) {
     console.error(`error - ${JSON.stringify(error)}`);
