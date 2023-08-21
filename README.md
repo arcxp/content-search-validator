@@ -81,6 +81,11 @@ The structure of the analyzer file (analyzers)[https://www.elastic.co/guide/en/e
 
 The name of the analyzer is the key of settings.analysis.analyzer. In the above example it will create a new analyzer called `rebuilt_arabic`` that will contain no configurations. This will not use the native french analyzer.
 
+### Custom analyzers
+
+An example custom analyzer uses external configurations custom_stop_words.txt and custom_synonym.txt. The files are added to
+opensearch in docker-compose.yml and the analyzer references the files.
+
 ## How to run it?
 
 It is recommneded to install nvm and use it to manage your node environments. This uses node 18 docker image.
