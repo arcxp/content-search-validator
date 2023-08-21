@@ -1,8 +1,7 @@
-FROM ubuntu:latest
+FROM node:18-alpine
 
-RUN apt-get update && apt-get install -y curl wget
+ADD package* ./scripts /scripts/
+WORKDIR /scripts
+RUN npm install
 
-ADD /scripts /scripts/
-RUN bash /scripts/init.sh
-
-CMD bash /scripts/run.sh
+CMD ["npm", "start"]

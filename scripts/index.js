@@ -1,9 +1,9 @@
 const express = require("express");
 const {
-  dowloadFile,
+  downloadFile,
   importDoc,
   searchIndex,
-  loadAnalyzer,
+  createAnalyzerAndData,
 } = require("./utils");
 
 const app = express();
@@ -17,15 +17,28 @@ const asyncHandler = (fun) => (req, res, next) => {
 
 app.use("/display", express.static("/data"));
 
-app.post("/load/:indexName/:fileName", (req, res) => {
-  const indexName = req.params.indexName;
-  let file = dowloadFile(req.params.fileName);
-  if (file) {
-    if (!Array.isArray(file)) file = [file];
-    file.forEach((item) => importDoc(indexName, item));
-  }
-  res.send(`Loaded ${JSON.stringify(file)}`);
-});
+app.post(
+  "/load/:indexName/:fileName",
+  asyncHandler(async (req, res) => {
+    const indexName = req.params.indexName;
+    let newContent = await downloadFile(
+      `/data/content/${indexName}`,
+      req.params.fileName
+    );
+    if (newContent) {
+      console.log(`content - ${JSON.stringify(newContent)}`);
+      if (!Array.isArray(newContent)) newContent = [newContent];
+      await Promise.all(
+        newContent.map(async function (item) {
+          importDoc(indexName, item);
+        })
+      );
+      res.send(`Loaded ${JSON.stringify(newContent)}`);
+    } else {
+      res.status(404).send("File not found");
+    }
+  })
+);
 
 app.post(
   "/search/:indexName",
@@ -33,17 +46,27 @@ app.post(
     const indexName = req.params.indexName;
     const query = req.body;
     const results = await searchIndex(indexName, query);
-    if (results && results.hits && results.hits.hits)
+    if (results && results.hits && results.hits.hits) {
       res.send(results.hits.hits);
+    } else {
+      res.status(400).send(results);
+    }
+  })
+);
+
+app.post(
+  "/reindex",
+  asyncHandler(async (req, res) => {
+    await createAnalyzerAndData();
+    res.send("Reindexed");
   })
 );
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`App listening on port ${port}`);
 });
 
-// Create index_fr and index_es so there is something to work with
-// TODO - Ability to load a new configuration
+// Runs on startup
 (async () => {
-  await loadAnalyzer("index_name_goes_here", "analyzer_object_here");
+  await createAnalyzerAndData();
 })();

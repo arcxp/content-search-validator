@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 services:
   opensearch:
     image: public.ecr.aws/opensearchproject/opensearch:1.3.11
@@ -7,7 +7,16 @@ services:
     ports:
       - "9200:9200"
     healthcheck:
-      test: ["CMD", "curl", "--fail", "-k", "-u", "admin:admin", "https://localhost:9200/_cluster/health"]
+      test:
+        [
+          "CMD",
+          "curl",
+          "--fail",
+          "-k",
+          "-u",
+          "admin:admin",
+          "https://localhost:9200/_cluster/health",
+        ]
       interval: 1s
       timeout: 1s
       retries: 30
@@ -29,8 +38,7 @@ services:
     build: .
     platform: linux/amd64
     volumes:
-      - ./scripts:/scripts
-      - ./app:/app
+      - ./app:/scripts/app
       - ./data:/data
     ports:
       - "3000:3000"

@@ -1,7 +1,9 @@
 const fs = require("fs");
 const got = require("got");
-const esx = require("/app/search-esX.js");
-const mapping = require("/app/elasticsearch_mappings/elasticsearch_mapping.js");
+const path = require("path");
+
+const esx = require("./app/search-esX.js");
+const mapping = require("./app/elasticsearch_mappings/elasticsearch_mapping.js");
 
 const default_options = {
   headers: { "Content-Type": "application/json" },
@@ -11,22 +13,46 @@ const default_options = {
   password: "admin",
 };
 
-function change_language(config, lang) {
+function add_mapping_to_analyzer(index, analyzer) {
+  const config_src = mapping.v2["7.1"]["japanese"];
+  mapping.remove_all_field_es7(config_src);
+
+  const config = JSON.parse(JSON.stringify(config_src));
+
+  // attempt to get the analyzer name from the object, otherwise use the index (filename)
+  let analyzerName;
+  try {
+    analyzerName = Object.keys(analyzer.settings.analysis.analyzer);
+    analyzerName = analyzerName[0];
+  } catch (error) {
+    analyzerName = index;
+  }
   esx.modifyObjectRecursively(config, (obj, key) => {
     if (obj[key] === "kuromoji") {
-      obj[key] = lang;
+      obj[key] = analyzerName;
     }
     return obj[key];
   });
+  analyzer.mappings = config.mappings;
+  analyzer.settings = {
+    ...analyzer.settings,
+    ...{
+      "index.mapping.ignore_malformed": false,
+      "index.mapping.total_fields.limit": 2000,
+    },
+  };
+  return analyzer;
 }
 
-function dowloadFile(fileName) {
+async function downloadFile(pathName, fileName) {
   try {
-    const outFile = fs.readFileSync(`/data/${fileName}`, { encoding: "utf-8" });
+    const filePath = path.join(pathName, fileName);
+    const outFile = await fs.promises.readFile(filePath, {
+      encoding: "utf-8",
+    });
     return JSON.parse(outFile);
   } catch (error) {
     console.error(error);
-    return {};
   }
 }
 
@@ -37,7 +63,9 @@ async function createIndex(name, mapping) {
       method: "PUT",
       body: JSON.stringify(mapping),
     };
-    await got(`https://opensearch:9200/${name}`, options);
+    await got(`https://opensearch:9200/${name}`, options).catch((error) => {
+      console.log(JSON.stringify(error.response.body));
+    });
   } catch (error) {
     console.error(error);
   }
@@ -56,6 +84,7 @@ async function importDoc(index, doc) {
       `https://opensearch:9200/${index}/_doc/${_id}`,
       options
     );
+    console.log(`📔 IMPORTING DOCUMENT ${_id} to ${index}`);
     return results;
   } catch (error) {
     console.error(error);
@@ -69,7 +98,6 @@ async function searchIndex(index, query) {
       method: "POST",
       body: JSON.stringify(query),
     };
-    console.log(`options - ${JSON.stringify(options)}`);
     const results = await got(
       `https://opensearch:9200/${index}/_search`,
       options
@@ -77,7 +105,8 @@ async function searchIndex(index, query) {
     console.log(`results - ${JSON.stringify(results)}`);
     return results;
   } catch (error) {
-    console.error(error);
+    console.error(`error - ${JSON.stringify(error)}`);
+    return error;
   }
 }
 
@@ -85,41 +114,75 @@ async function refresh() {
   await got(`https://opensearch:9200/_refresh`, {
     ...default_options,
     method: `POST`,
+  }).catch((error) => {
+    console.log(error.response.body);
+  });
+}
+
+async function delete_index(index) {
+  console.log(`🗑️ DELETING OLD ${index} index`);
+  await got(`https://opensearch:9200/${index}`, {
+    ...default_options,
+    method: `DELETE`,
+  }).catch((error) => {
+    if (error.response.body?.status !== 404) {
+      console.log(error.response.body);
+    }
   });
 }
 
 async function loadAnalyzer(index, analyzer) {
-  // TODO - update to create a new configuration
-  try {
-    const config_src = mapping.v2["7.1"]["japanese"];
-    mapping.remove_all_field_es7(config_src);
+  const arcAnalyzer = add_mapping_to_analyzer(index, analyzer);
+  await delete_index(index);
+  await refresh();
 
-    const config_fr = JSON.parse(JSON.stringify(config_src));
-    const config_es = JSON.parse(JSON.stringify(config_src));
-    change_language(config_fr, "french");
-    change_language(config_es, "spanish");
-
-    try {
-      console.log(`🗑️ DELETING OLD INDICES`);
-      await got(`https://opensearch:9200/index_fr`, {
-        ...default_options,
-        method: `DELETE`,
-      });
-      await got(`https://opensearch:9200/index_es`, {
-        ...default_options,
-        method: `DELETE`,
-      });
-      await refresh();
-    } catch (err) {
-      // console.log(err);
-    }
-
-    console.log(`📦 CREATING NEW INDEXES`);
-    await createIndex("index_fr", config_fr);
-    await createIndex("index_es", config_es);
-  } catch (err) {
-    console.log(err);
-  }
+  console.log(`📦 CREATING NEW ${index} index`);
+  await createIndex(index, arcAnalyzer);
 }
 
-module.exports = { dowloadFile, importDoc, searchIndex, loadAnalyzer };
+async function createAnalyzers() {
+  // load all analyzer configurations files in data/analyzer
+  const files = await fs.promises.readdir("/data/analyzer");
+  await Promise.all(
+    files.map(async function (file) {
+      const indexName = path.parse(file).name;
+      const config = await downloadFile("/data/analyzer", file);
+      await loadAnalyzer(indexName, config);
+    })
+  );
+}
+
+async function createData() {
+  // load all content files in data/content/index
+  // index must match the analyzer configuration name
+  const indexes = await fs.promises.readdir("/data/content");
+  await Promise.all(
+    indexes.map(async function (index) {
+      const contentPath = path.join("/data/content", index);
+      const files = await fs.promises.readdir(contentPath);
+      await Promise.all(
+        files.map(async function (file) {
+          let newContent = await downloadFile(contentPath, file);
+          if (newContent) {
+            if (!Array.isArray(newContent)) newContent = [newContent];
+            await Promise.all(
+              newContent.map(async (item) => importDoc(index, item))
+            );
+          }
+        })
+      );
+    })
+  );
+}
+
+async function createAnalyzerAndData() {
+  await createAnalyzers();
+  await createData();
+}
+
+module.exports = {
+  downloadFile,
+  importDoc,
+  searchIndex,
+  createAnalyzerAndData,
+};
