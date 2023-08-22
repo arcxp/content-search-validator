@@ -41,12 +41,12 @@ test("arabic exact match", async () => {
   expect(results.length).toEqual(1);
 });
 
-test("synonym elasticsearch matches opensearch", async () => {
+test("synonym elastic search matches opensearch", async () => {
   const results = await searchHeadlines(index, "elastic search");
   expect(results.length).toEqual(2);
 });
 
-test("to is a stop word doesn't match", async () => {
+test("search for stop word to doesn't match", async () => {
   const results = await searchHeadlines(index, "to");
   expect(results.length).toEqual(0);
 });

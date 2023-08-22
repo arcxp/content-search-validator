@@ -18,12 +18,18 @@ This is an opensearch docker container with an express app that allows you to lo
 data/
 ├── analyzer/
 │   ├── arabic.json (an example of a custom analyzer "rebuilt_arabic")
+│   ├── custom.json
 │   ├── english.json (native english analyzer)
 │   ├── french.json (native french analyzer)
 │   └── standard.json (default ArcXP analyzer)
+├── config
+│   ├── custom_stop_words.txt
+│   ├── custom_synonym.txt
 ├── content
 │   ├── arabic
 │   │   └── arabic_content.json
+│   ├── custom
+│   │   └── custom_content.json
 │   ├── english
 │   │   └── english_content.json
 │   └── french
@@ -32,6 +38,7 @@ data/
 │   │   └── standard_content.json
 └── test
 │   ├── arabic.test.js
+│   ├── custom.test.js
 │   ├── english.test.js
 │   ├── french.test.js
 │   └── standard.test.js
@@ -83,8 +90,10 @@ The name of the analyzer is the key of settings.analysis.analyzer. In the above 
 
 ### Custom analyzers
 
-An example custom analyzer uses external configurations custom_stop_words.txt and custom_synonym.txt. The files are added to
-opensearch in docker-compose.yml and the analyzer references the files.
+The arabic analyzer is an example of uses custom filters.
+
+The custom analyzer uses external configurations custom_stop_words.txt and custom_synonym.txt. The files are added to
+opensearch in docker-compose.yml and the analyzer references the files with `_path` statements.
 
 ## How to run it?
 
