@@ -92,8 +92,12 @@ The name of the analyzer is the key of settings.analysis.analyzer. In the above 
 
 The arabic analyzer is an example of uses custom filters.
 
-The custom analyzer uses external configurations custom_stop_words.txt and custom_synonym.txt. The files are added to
-opensearch in docker-compose.yml and the analyzer references the files with `_path` statements.
+The custom analyzer uses external configuration files custom_stop_words.txt and custom_synonym.txt. The files are added to
+opensearch containers /usr/share/opensearch/config/analyzers in docker-compose.yml and the analyzer references the files with `*_path` statements like:
+
+```
+"stopword_path": "analyzers/custom_stop_words.txt"
+```
 
 ## How to run it?
 
