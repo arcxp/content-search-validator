@@ -2,7 +2,7 @@
   "settings": {
     "analysis": {
       "analyzer": {
-        "default": {
+        "custom": {
           "tokenizer": "standard",
           "filter": ["lowercase", "custom_stop_words_filter", "custom_synonym"]
         }
