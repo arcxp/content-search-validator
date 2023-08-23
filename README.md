@@ -86,14 +86,12 @@ The structure of the analyzer file (analyzers)[https://www.elastic.co/guide/en/e
 }
 ```
 
-The name of the analyzer is the key of settings.analysis.analyzer. In the above example it will create a new analyzer called `rebuilt_arabic`` that will contain no configurations. This will not use the native french analyzer.
+The name of the analyzer is the key of settings.analysis.analyzer. In the above example it will create a new analyzer called `rebuilt_arabic`. This will not use the native arabic analyzer. The index will be called arabic.
 
 ### Custom analyzers
 
-The arabic analyzer is an example of uses custom filters.
-
 The custom analyzer uses external configuration files custom_stop_words.txt and custom_synonym.txt. The files are added to
-opensearch containers /usr/share/opensearch/config/analyzers in docker-compose.yml and the analyzer references the files with `*_path` statements like:
+the opensearch containers /usr/share/opensearch/config/analyzers in docker-compose.yml and the analyzer references the files with `*_path` statements like:
 
 ```
 "stopword_path": "analyzers/custom_stop_words.txt"
@@ -112,7 +110,7 @@ $ ./run.sh
 
 Making changes to or adding files in data will trigger the container to reload the analyzers reindex and reload the contents.
 
-open postman or your favorite API tool and access express on port 3000.
+open postman, your favorite API tool or curl and access express on port 3000.
 
 To view a json file in the data folder use a GET request:
 
@@ -129,16 +127,16 @@ http://localhost:3000/load/french/french_content.json
 To search for content use a POST request /search/{index_name} and pass a opensearch query in the body as json
 
 ```
-http://localhost:3000/search/french
-
-body:
-{
+curl \
+  -H "Content-Type: application/json" \
+  -XPOST http://localhost:3000/search/french \
+  -d '{
   "query": {
     "query_string": {
       "query": "parle"
     }
   }
-}
+}'
 ```
 
 ## tests
@@ -155,15 +153,15 @@ You can directly access the opensearch container on port 9200. This requires bas
 
 ```
 curl \
+  -u 'admin:admin' \
+  -k \
   -H "Content-Type: application/json" \
-  -XPOST http://localhost:3000/search/french \
+  -XPOST https://localhost:9200/french/_search \
   -d '{
   "query": {
-    "query_string": {
-      "query": "parle"
-    }
+      "match_all": {}
   }
-}
+}'
 ```
 
 ## admin container
