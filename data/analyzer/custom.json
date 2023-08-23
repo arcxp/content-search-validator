@@ -1,0 +1,23 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "custom": {
+          "tokenizer": "standard",
+          "filter": ["lowercase", "custom_stop_words_filter", "custom_synonym"]
+        }
+      },
+      "filter": {
+        "custom_stop_words_filter": {
+          "type": "stop",
+          "ignore_case": true,
+          "stopword_path": "analyzers/custom_stop_words.txt"
+        },
+        "custom_synonym": {
+          "type": "synonym",
+          "synonyms_path": "analyzers/custom_synonym.txt"
+        }
+      }
+    }
+  }
+}
