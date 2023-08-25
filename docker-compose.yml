@@ -39,7 +39,6 @@ services:
     build: .
     platform: linux/amd64
     volumes:
-      - ./app:/scripts/app
       - ./data:/data
     ports:
       - "3000:3000"

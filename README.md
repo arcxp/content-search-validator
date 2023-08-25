@@ -48,7 +48,11 @@ data/
 
 The analyzer file name `french.json` will be used to create the index `french` and if the file contains no analyzer object will use the file name to set the analyzer (native french).
 
-The structure of the analyzer file (analyzers)[https://www.elastic.co/guide/en/elasticsearch/reference/7.10/analyzer-anatomy.html]
+The list of supported language analyzers (languages)[(analyzers)[https://opensearch.org/docs/latest/analyzers/language-analyzers/]
+
+### Custom analyzers
+
+Documentation on analyzer configuration (analyzers)[https://www.elastic.co/guide/en/elasticsearch/reference/7.10/analysis.html]
 
 ```
 {
@@ -88,14 +92,20 @@ The structure of the analyzer file (analyzers)[https://www.elastic.co/guide/en/e
 
 The name of the analyzer is the key of settings.analysis.analyzer. In the above example it will create a new analyzer called `rebuilt_arabic`. This will not use the native arabic analyzer. The index will be called arabic.
 
-### Custom analyzers
-
 The custom analyzer uses external configuration files custom_stop_words.txt and custom_synonym.txt. The files are added to
 the opensearch containers /usr/share/opensearch/config/analyzers in docker-compose.yml and the analyzer references the files with `*_path` statements like:
 
 ```
 "stopword_path": "analyzers/custom_stop_words.txt"
 ```
+
+### field mappings
+
+When the analyzer is loaded, a set of field mappings (scripts/default_mappings) is added that will map the analyzer to three fields.
+
+- headlines.basic
+- subheadlines.basic
+- description.basic
 
 ## How to run it?
 
@@ -108,23 +118,17 @@ $ npm install
 $ ./run.sh
 ```
 
-Making changes to or adding files in data will trigger the container to reload the analyzers reindex and reload the contents.
+Making changes to or adding any `.json` or `.txt` files in data will trigger the container to reload the analyzers reindex and reload the contents.
 
 open postman, your favorite API tool or curl and access express on port 3000.
 
-To view a json file in the data folder use a GET request:
+To search for text in headlines.basic use a GET request to /searchHeadlines/{index_name}/{search text}
 
 ```
-http://localhost:3000/display/content/french/french_content.json
+http://localhost:3000/searchHeadlines/standard/opensearch
 ```
 
-To load a json file in the data folder use a POST request /load/{index_name}/{file_name}:
-
-```
-http://localhost:3000/load/french/french_content.json
-```
-
-To search for content use a POST request /search/{index_name} and pass a opensearch query in the body as json
+To search for content using your own query, use a POST request /search/{index_name} and pass a opensearch query in the body as json. This returns the `hits.hits` array of the opensearch results.
 
 ```
 curl \
@@ -149,7 +153,7 @@ $ npm test
 
 ## opensearch container
 
-You can directly access the opensearch container on port 9200. This requires basic auth admin:admin
+You can directly access the opensearch container on port 9200. Note, this is https and has a self signed certificate and needs --insecure or -k. This requires basic auth admin:admin
 
 ```
 curl \
@@ -161,6 +165,20 @@ curl \
   "query": {
       "match_all": {}
   }
+}'
+```
+
+Opensearch has an `_analyze` endpoint that works with the native analyzers and returns the tokens the analyzer generates for the specified text.
+
+```
+curl \
+  -u 'admin:admin' \
+  -k \
+  -H "Content-Type: application/json" \
+  -XPOST https://localhost:9200/_analyze \
+  -d '{
+    "analyzer": "standard",
+    "text": "Is this déjà vu?"
 }'
 ```
 

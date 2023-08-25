@@ -3,6 +3,7 @@
     "analysis": {
       "analyzer": {
         "custom": {
+          "type": "custom",
           "tokenizer": "standard",
           "filter": ["lowercase", "custom_stop_words_filter", "custom_synonym"]
         }
@@ -11,7 +12,7 @@
         "custom_stop_words_filter": {
           "type": "stop",
           "ignore_case": true,
-          "stopword_path": "analyzers/custom_stop_words.txt"
+          "stopwords_path": "analyzers/custom_stop_words.txt"
         },
         "custom_synonym": {
           "type": "synonym",

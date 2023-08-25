@@ -46,7 +46,12 @@ test("synonym elastic search matches opensearch", async () => {
   expect(results.length).toEqual(2);
 });
 
-test("search for stop word to doesn't match", async () => {
-  const results = await searchHeadlines(index, "to");
+test("search for stop word in custom_stop_words.txt ", async () => {
+  const results = await searchHeadlines(index, "in");
   expect(results.length).toEqual(0);
+});
+
+test("search for stop word not in custom_stop_words.txt ", async () => {
+  const results = await searchHeadlines(index, "to");
+  expect(results.length).toEqual(1);
 });
