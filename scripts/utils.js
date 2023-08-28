@@ -2,8 +2,7 @@ const fs = require("fs");
 const got = require("got");
 const path = require("path");
 
-const esx = require("./app/search-esX.js");
-const mapping = require("./app/elasticsearch_mappings/elasticsearch_mapping.js");
+const { default_mappings } = require("./default_mappings");
 
 const default_options = {
   headers: { "Content-Type": "application/json" },
@@ -13,11 +12,24 @@ const default_options = {
   password: "admin",
 };
 
-function add_mapping_to_analyzer(index, analyzer) {
-  const config_src = mapping.v2["7.1"]["japanese"];
-  mapping.remove_all_field_es7(config_src);
+function modifyObjectRecursively(obj, fn) {
+  let val;
+  for (const key in obj) {
+    val = fn.apply(this, [obj, key]);
+    if (val) {
+      if (typeof val === "object") {
+        modifyObjectRecursively(val, fn);
+      } else if (Object.prototype.toString.call(val) === "[object Array]") {
+        val.forEach(function (entry) {
+          modifyObjectRecursively(entry, fn);
+        });
+      }
+    }
+  }
+}
 
-  const config = JSON.parse(JSON.stringify(config_src));
+function add_mapping_to_analyzer(index, analyzer) {
+  const config = JSON.parse(JSON.stringify(default_mappings));
 
   // attempt to get the analyzer name from the object, otherwise use the index (filename)
   let analyzerName;
@@ -27,8 +39,9 @@ function add_mapping_to_analyzer(index, analyzer) {
   } catch (error) {
     analyzerName = index;
   }
-  esx.modifyObjectRecursively(config, (obj, key) => {
-    if (obj[key] === "kuromoji") {
+  // set the analyer in the field mappings
+  modifyObjectRecursively(config, (obj, key) => {
+    if (obj[key] === "standard") {
       obj[key] = analyzerName;
     }
     return obj[key];

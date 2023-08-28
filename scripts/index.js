@@ -40,6 +40,26 @@ app.post(
   })
 );
 
+app.get(
+  "/searchHeadlines/:indexName/:query",
+  asyncHandler(async (req, res) => {
+    const indexName = req.params.indexName;
+    const query = {
+      query: {
+        match: {
+          "headlines.basic": req.params.query,
+        },
+      },
+    };
+    const results = await searchIndex(indexName, query);
+    if (results && results.hits && results.hits.hits) {
+      res.send(results.hits.hits);
+    } else {
+      res.status(400).send(results);
+    }
+  })
+);
+
 app.post(
   "/search/:indexName",
   asyncHandler(async (req, res) => {
