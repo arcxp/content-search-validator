@@ -1,6 +1,6 @@
 {
-  "name": "language-configuration-poc",
-  "version": "0.0.1",
+  "name": "language-configuration-tool",
+  "version": "1.0.0",
   "description": "opensearch analyzer configuration tool",
   "main": "index.js",
   "scripts": {
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/WPMedia/language-configuration-poc.git"
+    "url": "git+https://github.com/arcxp/language-configuration-tool.git"
   },
   "author": "",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/WPMedia/language-configuration-poc/issues"
+    "url": "https://github.com/arcxp/language-configuration-tool/issues"
   },
-  "homepage": "https://github.com/WPMedia/language-configuration-poc#readme",
+  "homepage": "https://github.com/arcxp/language-configuration-tool#readme",
   "dependencies": {
     "express": "^4.18.2",
     "got": "^11.8.6",

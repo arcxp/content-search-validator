@@ -5,6 +5,5 @@ credentials.yml
 node_modules
 package-lock.json
 .DS_Store
-archive/app/content-api-check-mappings/mappings
 .vscode/settings.json
 **/.vscode/settings.json
