@@ -109,6 +109,8 @@ When the analyzer is loaded, a set of field mappings (scripts/default_mappings) 
 
 ## How to run it?
 
+This repo requires you have [docker](https://www.docker.com/products/docker-desktop/) installed and running to work.
+
 It is recommneded to install nvm and use it to manage your node environments. This uses node 18 docker image.
 
 ### Install dependencies, only needed once.
