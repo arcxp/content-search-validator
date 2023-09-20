@@ -21,7 +21,8 @@ data/
 │   ├── custom.json
 │   ├── english.json (native english analyzer)
 │   ├── french.json (native french analyzer)
-│   └── standard.json (default ArcXP analyzer)
+│   ├── standard.json (default ArcXP analyzer)
+│   └── tri-gram.json (tri-gram tokenizer)
 ├── config
 │   ├── custom_stop_words.txt
 │   ├── custom_synonym.txt
@@ -32,16 +33,19 @@ data/
 │   │   └── custom_content.json
 │   ├── english
 │   │   └── english_content.json
-│   └── french
+│   ├── french
 │   │   └── french_content.json
-│   └── standard
+│   ├── standard
 │   │   └── standard_content.json
+│   ├── tri-gram
+│   │   └── tri-gram_content.json
 └── test
 │   ├── arabic.test.js
 │   ├── custom.test.js
 │   ├── english.test.js
 │   ├── french.test.js
-│   └── standard.test.js
+│   ├── standard.test.js
+│   └── tri-gram.test.js
 ```
 
 ## Analyzer format
@@ -147,9 +151,10 @@ curl \
 
 ## tests
 
-run tests locally using
+The app must first be started before you can run the tests. Run tests locally using
 
 ```
+$ ./run.sh
 $ npm test
 ```
 
