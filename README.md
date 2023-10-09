@@ -1,4 +1,4 @@
-# language-configuration-poc
+# Content Search Validator
 
 A tool to build and test language configurations using opensearch.
 
@@ -52,11 +52,11 @@ data/
 
 The analyzer file name `french.json` will be used to create the index `french` and if the file contains no analyzer object will use the file name to set the analyzer (native french).
 
-The list of supported language analyzers (languages)[(analyzers)[https://opensearch.org/docs/latest/analyzers/language-analyzers/]
+The list of supported language analyzers [languages analyzers](https://opensearch.org/docs/latest/analyzers/language-analyzers/)
 
 ### Custom analyzers
 
-Documentation on analyzer configuration (analyzers)[https://www.elastic.co/guide/en/elasticsearch/reference/7.10/analysis.html]
+Documentation on analyzer configuration [analyzers](https://www.elastic.co/guide/en/elasticsearch/reference/7.10/analysis.html)
 
 ```
 {
